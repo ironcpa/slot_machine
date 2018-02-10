@@ -16,7 +16,8 @@ class SlotMachine:
 
 
 class Result:
-    def __init__(self, coin_in, stop_pos, symbols, coin_out):
+    def __init__(self, line_id, coin_in, stop_pos, symbols, coin_out):
+        self.line_id = line_id
         self.coin_in = coin_in
         self.stop_pos = stop_pos
         self.symbols = symbols      # symbol sequence by rows by top to bottom
@@ -48,13 +49,13 @@ def spin(machine, coin_in, stops=None):
     symbols = tuple(symbol_list)
 
     results = []
-    for payline in machine.paylines:
+    for i, payline in enumerate(machine.paylines):
         line_symbols = get_line_symbols(machine.reel_heights, symbols, payline)
         payout_rate = calc_payout_rate(machine.symboldefs, machine.paytables, line_symbols)
         coin_out = coin_in * payout_rate
 
         if coin_out > 0:
-            results.append(Result(coin_in, stops, symbols, coin_out))
+            results.append(Result(i, coin_in, stops, symbols, coin_out))
 
     return results
 
@@ -109,6 +110,19 @@ def get_total_coin_out(results):
     return sum([r.coin_out for r in results])
 
 
+def create_logs(reel_count, results):
+    log = ''
+    for r in results:
+        lines = [r.symbols[i:i+reel_count] for i in range(0, len(r.symbols), reel_count)]
+        symbols = '['
+        for i, l in enumerate(lines):
+            symbols += ', '.join(l)
+            symbols += ' : ' if (i+1) < len(lines) else ''
+        symbols += ']'
+        log += 'line{:02d}, {}, {}, {}, {}\n'.format(r.line_id, r.coin_in, r.stop_pos, symbols, r.coin_out)
+    return log
+
+
 if __name__ == '__main__':
     machine = SlotMachine((3, 3, 3, 3, 3),
                           (Symbol('W', True),
@@ -148,7 +162,10 @@ if __name__ == '__main__':
                            ('W', 'A', 'B', 'C', 'D', 'E')))
 
     total_coin_out = 0
-    for _ in range(20):
+    reel_count = len(machine.reels)
+    for i in range(1):
         results = spin(machine, 10)
+        print('{0:02d} spin:'.format(i))
+        print(create_logs(reel_count, results))
         total_coin_out += get_total_coin_out(results)
     print('total coin out = ', total_coin_out)

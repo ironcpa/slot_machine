@@ -1,3 +1,4 @@
+import unittest
 from unittest import TestCase
 import slot_machine as sm
 from slot_machine import *
@@ -286,3 +287,16 @@ class TestSlotMachine(TestCase):
         test_stop = (0, 0, 0)
         results = sm.spin(machine, 1, test_stop)
         assert_true(self.assertTrue, 200, results[0].coin_out)
+
+    def test_print_spin_log(self):
+        results = [Result(0, 1, 0, ['a', 'b', 'c'], 0),
+                   Result(1, 1, 1, ['d', 'e', 'f'], 1),]
+
+        log = create_logs(5, results)
+        print(log)
+        self.assertEqual('line00, 1, 0, [a, b, c], 0\nline01, 1, 1, [d, e, f], 1\n', log)
+
+
+if __name__ == '__main__':
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestSlotMachine)
+    unittest.TextTestRunner(verbosity=2).run(suite)
