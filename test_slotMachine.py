@@ -35,30 +35,27 @@ class TestSlotMachine(TestCase):
         assert_true(self.assertTrue, self.machine.reel_heights[1], 1)
         assert_true(self.assertTrue, self.machine.reel_heights[2], 1)
 
-    def assert_common_spin_results(self, coin_in, results):
-        fst = results[0]
+    def assert_common_spin_results(self, result):
         self.assertTrue(len(results) > 0)
-        self.assertTrue(fst.coin_in == coin_in)
-        assert_true(self.assertTrue, fst.coin_in, coin_in)
-        self.assertTrue(fst.symbols is not None)
+        self.assertTrue(result.symbols is not None)
 
     def test_spin(self):
-        results = sm.spin(self.machine, 1)
-        if len(results) == 1:
-            self.assert_common_spin_results(1, results)
+        result = sm.spin(self.machine, 1)
+        if result.len() == 1:
+            self.assert_common_spin_results(result)
 
-        results = sm.spin(self.machine, 2)
-        if len(results) == 1:
-            self.assert_common_spin_results(2, results)
+        result = sm.spin(self.machine, 2)
+        if result.len() == 1:
+            self.assert_common_spin_results(result)
 
     def test_reserve_spin(self):
         test_stop = (0, 0, 0)
-        results = sm.spin(self.machine, 1, test_stop)
-        assert_true(self.assertTrue, 0, len(results))
+        result = sm.spin(self.machine, 1, test_stop)
+        assert_true(self.assertTrue, 0, result.len())
 
         test_stop = (0, 0, 1)
-        results = sm.spin(self.machine, 1, test_stop)
-        assert_true(self.assertTrue, 0, len(results))
+        result = sm.spin(self.machine, 1, test_stop)
+        assert_true(self.assertTrue, 0, result.len())
 
     def test_coin_out(self):
         machine = SlotMachine((3, 3, 3),
@@ -81,31 +78,26 @@ class TestSlotMachine(TestCase):
         # C x 3 : 20
 
         test_stop = (0, 0, 0)
-        results = sm.spin(machine, 1, test_stop)
-        fst = results[0]
-        coin_out = fst.coin_out
+        result = sm.spin(machine, 1, test_stop)
+        coin_out = result.fst().coin_out
         assert_true(self.assertTrue, 100, coin_out)
 
-        results = sm.spin(machine, 2, test_stop)
-        fst = results[0]
-        coin_out = fst.coin_out
+        result = sm.spin(machine, 2, test_stop)
+        coin_out = result.fst().coin_out
         assert_true(self.assertTrue, 200, coin_out)
 
         test_stop = (1, 1, 1)
-        results = sm.spin(machine, 1, test_stop)
-        fst = results[0]
-        coin_out = fst.coin_out
+        result = sm.spin(machine, 1, test_stop)
+        coin_out = result.fst().coin_out
         assert_true(self.assertTrue, 50, coin_out)
 
-        results = sm.spin(machine, 2, test_stop)
-        fst = results[0]
-        coin_out = fst.coin_out
+        result = sm.spin(machine, 2, test_stop)
+        coin_out = result.fst().coin_out
         assert_true(self.assertTrue, 100, coin_out)
 
         test_stop = (0, 0, 1)
-        results = sm.spin(machine, 1, test_stop)
-        fst = results[0]
-        coin_out = fst.coin_out
+        result = sm.spin(machine, 1, test_stop)
+        coin_out = result.fst().coin_out
         assert_true(self.assertTrue, 30, coin_out)
 
     def test_multi_row_slot(self):
@@ -135,11 +127,12 @@ class TestSlotMachine(TestCase):
         # 0, 1, 2
 
         test_stop = (0, 0, 0)
-        results = sm.spin(machine, 1, test_stop)
-        assert_true(self.assertTrue, 3, len(results))
-        assert_true(self.assertTrue, 100, results[0].coin_out)
-        assert_true(self.assertTrue, 50, results[1].coin_out)
-        assert_true(self.assertTrue, 20, results[2].coin_out)
+        result = sm.spin(machine, 1, test_stop)
+        line_results = result.line_results
+        assert_true(self.assertTrue, 3, len(line_results))
+        assert_true(self.assertTrue, 100, line_results[0].coin_out)
+        assert_true(self.assertTrue, 50, line_results[1].coin_out)
+        assert_true(self.assertTrue, 20, line_results[2].coin_out)
 
         # more complex paylines
         machine = SlotMachine((3, 3, 3),
@@ -157,27 +150,30 @@ class TestSlotMachine(TestCase):
                                ('A', 'B', 'A', 'B', 'C', 'B', 'C', 'C', 'C')))
 
         test_stop = (0, 0, 0)
-        results = sm.spin(machine, 1, test_stop)
-        assert_true(self.assertTrue, 2, len(results))
-        assert_true(self.assertTrue, 100, results[0].coin_out)
-        assert_true(self.assertTrue, 100, results[1].coin_out)
+        result = sm.spin(machine, 1, test_stop)
+        line_results = result.line_results
+        assert_true(self.assertTrue, 2, len(line_results))
+        assert_true(self.assertTrue, 100, line_results[0].coin_out)
+        assert_true(self.assertTrue, 100, line_results[1].coin_out)
 
         test_stop = (3, 3, 3)
-        results = sm.spin(machine, 1, test_stop)
-        assert_true(self.assertTrue, 4, len(results))
-        assert_true(self.assertTrue, 50, results[0].coin_out)
-        assert_true(self.assertTrue, 50, results[1].coin_out)
-        assert_true(self.assertTrue, 50, results[2].coin_out)
-        assert_true(self.assertTrue, 50, results[3].coin_out)
+        result = sm.spin(machine, 1, test_stop)
+        line_results = result.line_results
+        assert_true(self.assertTrue, 4, len(line_results))
+        assert_true(self.assertTrue, 50, line_results[0].coin_out)
+        assert_true(self.assertTrue, 50, line_results[1].coin_out)
+        assert_true(self.assertTrue, 50, line_results[2].coin_out)
+        assert_true(self.assertTrue, 50, line_results[3].coin_out)
 
         test_stop = (6, 6, 6)
-        results = sm.spin(machine, 1, test_stop)
-        assert_true(self.assertTrue, 5, len(results))
-        assert_true(self.assertTrue, 20, results[0].coin_out)
-        assert_true(self.assertTrue, 20, results[1].coin_out)
-        assert_true(self.assertTrue, 20, results[2].coin_out)
-        assert_true(self.assertTrue, 20, results[3].coin_out)
-        assert_true(self.assertTrue, 20, results[4].coin_out)
+        result = sm.spin(machine, 1, test_stop)
+        line_results = result.line_results
+        assert_true(self.assertTrue, 5, len(line_results))
+        assert_true(self.assertTrue, 20, line_results[0].coin_out)
+        assert_true(self.assertTrue, 20, line_results[1].coin_out)
+        assert_true(self.assertTrue, 20, line_results[2].coin_out)
+        assert_true(self.assertTrue, 20, line_results[3].coin_out)
+        assert_true(self.assertTrue, 20, line_results[4].coin_out)
 
     def test_total_payout(self):
         machine = SlotMachine((3, 3, 3),
@@ -233,17 +229,19 @@ class TestSlotMachine(TestCase):
                                ('A', 'B', 'W', 'W')))
 
         test_stop = (0, 0, 0)
-        results = sm.spin(machine, 1, test_stop)
-        assert_true(self.assertTrue, 200, results[0].coin_out)
-        assert_true(self.assertTrue, 80, results[1].coin_out)
-        assert_true(self.assertTrue, 30, results[2].coin_out)
-        assert_true(self.assertTrue, 200 + 80 + 30, sm.get_total_coin_out(results))
+        result = sm.spin(machine, 1, test_stop)
+        line_results = result.line_results
+        assert_true(self.assertTrue, 200, line_results[0].coin_out)
+        assert_true(self.assertTrue, 80, line_results[1].coin_out)
+        assert_true(self.assertTrue, 30, line_results[2].coin_out)
+        assert_true(self.assertTrue, 200 + 80 + 30, sm.get_total_coin_out(result))
 
         test_stop = (1, 1, 1)
-        results = sm.spin(machine, 1, test_stop)
-        assert_true(self.assertTrue, 80, results[0].coin_out)
-        assert_true(self.assertTrue, 30, results[1].coin_out)
-        assert_true(self.assertTrue, 80 + 30, sm.get_total_coin_out(results))
+        result = sm.spin(machine, 1, test_stop)
+        line_results = result.line_results
+        assert_true(self.assertTrue, 80, line_results[0].coin_out)
+        assert_true(self.assertTrue, 30, line_results[1].coin_out)
+        assert_true(self.assertTrue, 80 + 30, sm.get_total_coin_out(result))
 
     def test_circular_reel(self):
         machine = SlotMachine((3, 3, 3),
@@ -261,12 +259,13 @@ class TestSlotMachine(TestCase):
                                ('A', 'B', 'W')))
 
         test_stop = (2, 2, 2)
-        results = sm.spin(machine, 1, test_stop)
-        assert_true(self.assertTrue, 3, len(results))
-        assert_true(self.assertTrue, 30, results[0].coin_out)
-        assert_true(self.assertTrue, 200, results[1].coin_out)
-        assert_true(self.assertTrue, 80, results[2].coin_out)
-        assert_true(self.assertTrue, 30 + 200 + 80, sm.get_total_coin_out(results))
+        result = sm.spin(machine, 1, test_stop)
+        line_results = result.line_results
+        assert_true(self.assertTrue, 3, result.len())
+        assert_true(self.assertTrue, 30, line_results[0].coin_out)
+        assert_true(self.assertTrue, 200, line_results[1].coin_out)
+        assert_true(self.assertTrue, 80, line_results[2].coin_out)
+        assert_true(self.assertTrue, 30 + 200 + 80, sm.get_total_coin_out(result))
 
     def test_wild_payout(self):
         machine = SlotMachine((3, 3, 3),
@@ -285,16 +284,17 @@ class TestSlotMachine(TestCase):
                                ('W', 'B', 'W')))
 
         test_stop = (0, 0, 0)
-        results = sm.spin(machine, 1, test_stop)
-        assert_true(self.assertTrue, 200, results[0].coin_out)
+        result = sm.spin(machine, 1, test_stop)
+        assert_true(self.assertTrue, 200, result.line_results[0].coin_out)
 
     def test_print_spin_log(self):
-        results = [Result(0, 1, 0, ['a', 'b', 'c'], 0),
-                   Result(1, 1, 1, ['d', 'e', 'f'], 1),]
+        line_results = [PaylineResult(0, 0),
+                        PaylineResult(1, 1),]
+        result = Result(1, 1, ['a', 'b', 'c'], line_results)
 
-        log = create_logs(5, results)
+        log = create_logs(5, result)
         print(log)
-        self.assertEqual('line00, 1, 0, [a, b, c], 0\nline01, 1, 1, [d, e, f], 1\n', log)
+        self.assertEqual('line00, 1, 1, [a, b, c], 0\nline01, 1, 1, [a, b, c], 1\n', log)
 
 
 if __name__ == '__main__':

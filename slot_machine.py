@@ -15,13 +15,26 @@ class SlotMachine:
         self.reels = reels
 
 
-class Result:
-    def __init__(self, line_id, coin_in, stop_pos, symbols, coin_out):
+class PaylineResult:
+    def __init__(self, line_id, coin_out):
         self.line_id = line_id
+        self.coin_out = coin_out
+
+
+class Result:
+    def __init__(self, coin_in, stop_pos, symbols, line_results):
         self.coin_in = coin_in
         self.stop_pos = stop_pos
         self.symbols = symbols      # symbol sequence by rows by top to bottom
-        self.coin_out = coin_out
+        self.line_results = line_results
+
+    def len(self):
+        return len(self.line_results)
+
+    def fst(self):
+        if self.line_results and self.len() > 0:
+            return self.line_results[0]
+        return None
 
 
 def get_line_symbols(reel_lens, symbols, payline):
@@ -48,16 +61,16 @@ def spin(machine, coin_in, stops=None):
             symbol_list.append(reel[i])
     symbols = tuple(symbol_list)
 
-    results = []
+    line_results = []
     for i, payline in enumerate(machine.paylines):
         line_symbols = get_line_symbols(machine.reel_heights, symbols, payline)
         payout_rate = calc_payout_rate(machine.symboldefs, machine.paytables, line_symbols)
         coin_out = coin_in * payout_rate
 
         if coin_out > 0:
-            results.append(Result(i, coin_in, stops, symbols, coin_out))
+            line_results.append(PaylineResult(i, coin_out))
 
-    return results
+    return Result(coin_in, stops, symbols, line_results) 
 
 
 def fst(iterable):
@@ -106,20 +119,22 @@ def calc_payout_rate(symboldefs, paytables, symbols):
     return get_payout(paytables, l_symbol, matches)
 
 
-def get_total_coin_out(results):
-    return sum([r.coin_out for r in results])
+def get_total_coin_out(result):
+    return sum([r.coin_out for r in result.line_results])
 
 
-def create_logs(reel_count, results):
+def create_logs(reel_count, result):
+    lines = [result.symbols[i:i+reel_count] for i in range(0, len(result.symbols), reel_count)]
+    symbols = '['
+    for i, l in enumerate(lines):
+        symbols += ', '.join(l)
+        symbols += ' : ' if (i+1) < len(lines) else ''
+    symbols += ']'
+
+    line_results = result.line_results
     log = ''
-    for r in results:
-        lines = [r.symbols[i:i+reel_count] for i in range(0, len(r.symbols), reel_count)]
-        symbols = '['
-        for i, l in enumerate(lines):
-            symbols += ', '.join(l)
-            symbols += ' : ' if (i+1) < len(lines) else ''
-        symbols += ']'
-        log += 'line{:02d}, {}, {}, {}, {}\n'.format(r.line_id, r.coin_in, r.stop_pos, symbols, r.coin_out)
+    for r in line_results:
+        log += 'line{:02d}, {}, {}, {}, {}\n'.format(r.line_id, result.coin_in, result.stop_pos, symbols, r.coin_out)
     return log
 
 
