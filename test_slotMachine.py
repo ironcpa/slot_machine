@@ -302,7 +302,7 @@ class TestSlotMachine(TestCase):
         result = Result(1, 1, ['a', 'b', 'c'], line_results)
 
         reel_heights = (1, 1, 1)
-        log = create_payline_log(reel_heights, result)
+        log = make_payline_log(0, reel_heights, result)
         self.assertEqual('line00, 1, 0\nline01, 1, 1\n', log)
 
     def test_scatter_simple(self):
@@ -355,7 +355,6 @@ class TestSlotMachine(TestCase):
                               (('S', 'B', 'C', 'A'),
                                ('S', 'A', 'C', 'B'),
                                ('S', 'B', 'A', 'C')),
-                              #scatter_tables = (ScatterPaytable('S', 3, 'freespin', 1),),
                               (('A',),
                                ('A',),
                                ('A',),))
@@ -374,10 +373,94 @@ class TestSlotMachine(TestCase):
         for i, r in enumerate(freespin_result.line_results):
             self.assertEqual(r.coin_out, 200)
 
+    def test_freespin_stop_reserve(self):
+        machine = SlotMachine((3, 3, 3),
+                              (Symbol('W', True),
+                               Symbol('A', False),
+                               Symbol('B', False),
+                               Symbol('C', False),
+                               Symbol('S', False)), # scatter
+                              (Paytable('W', 3, 200),
+                               Paytable('A', 3, 200),
+                               Paytable('A', 2, 100),
+                               Paytable('B', 3, 80),
+                               Paytable('C', 3, 30)),
+                              (ScatterPaytable('S', 3, 'freespin', 2),),
+                              ((0, 0, 0), (1, 1, 1), (2, 2, 2)),
+                              (('S', 'B', 'C', 'A'),
+                               ('S', 'A', 'C', 'B'),
+                               ('S', 'B', 'A', 'C')),
+                              (('A', 'B', 'C'),
+                               ('A', 'B', 'C'),
+                               ('A', 'B', 'C'),))
+        test_stops = [(0, 0, 0), (0, 0, 0), (1, 1, 1)]
+        result = sm.spin(machine, 1, False, test_stops)
+        scatter_result = result.scatter_results[0]
+
+        freespin_result = scatter_result.child_results[0]
+        self.assertEqual(freespin_result.symbols, ('A', 'B', 'C', 'A', 'B', 'C', 'A', 'B', 'C'))
+        freespin_line_results = freespin_result.line_results
+        self.assertEqual(freespin_line_results[0].coin_out, 200)
+        self.assertEqual(freespin_line_results[1].coin_out, 80)
+        self.assertEqual(freespin_line_results[2].coin_out, 30)
+
+        freespin_result = scatter_result.child_results[1]
+        self.assertEqual(freespin_result.symbols, ('B', 'C', 'A', 'B', 'C', 'A', 'B', 'C', 'A'))
+        freespin_line_results = freespin_result.line_results
+        self.assertEqual(freespin_line_results[0].coin_out, 80)
+        self.assertEqual(freespin_line_results[1].coin_out, 30)
+        self.assertEqual(freespin_line_results[2].coin_out, 200)
+
+    def test_freespin_retrigger(self):
+        machine = SlotMachine((3, 3, 3),
+                              (Symbol('W', True),
+                               Symbol('A', False),
+                               Symbol('B', False),
+                               Symbol('C', False),
+                               Symbol('S', False)), # scatter
+                              (Paytable('W', 3, 200),
+                               Paytable('A', 3, 200),
+                               Paytable('A', 2, 100),
+                               Paytable('B', 3, 80),
+                               Paytable('C', 3, 30)),
+                              (ScatterPaytable('S', 3, 'freespin', 2),),
+                              ((0, 0, 0), (1, 1, 1), (2, 2, 2)),
+                              (('S', 'B', 'C', 'A'),
+                               ('S', 'A', 'C', 'B'),
+                               ('S', 'B', 'A', 'C')),
+                              (('S', 'A', 'B', 'C'),
+                               ('S', 'A', 'B', 'C'),
+                               ('S', 'A', 'B', 'C'),))
+        test_stops = [(0, 0, 0), (1, 1, 1), (0, 0, 0), (1, 1, 1)]
+        result = sm.spin(machine, 1, False, test_stops)
+        scatter_result = result.scatter_results[0]
+
+        freespin_result = scatter_result.child_results[0]
+        self.assertEqual(freespin_result.symbols, ('A', 'B', 'C', 'A', 'B', 'C', 'A', 'B', 'C'))
+        freespin_line_results = freespin_result.line_results
+        self.assertEqual(freespin_line_results[0].coin_out, 200)
+        self.assertEqual(freespin_line_results[1].coin_out, 80)
+        self.assertEqual(freespin_line_results[2].coin_out, 30)
+
+        freespin_result = scatter_result.child_results[1]
+        self.assertEqual(freespin_result.symbols, ('S', 'A', 'B', 'S', 'A', 'B', 'S', 'A', 'B'))
+        freespin_line_results = freespin_result.line_results
+        self.assertEqual(len(freespin_line_results), 2)
+        self.assertEqual(freespin_line_results[0].coin_out, 200)
+        self.assertEqual(freespin_line_results[1].coin_out, 80)
+        scatter_result = freespin_result.scatter_results[0]
+
+        freespin_result = scatter_result.child_results[0]
+        self.assertEqual(freespin_result.symbols, ('A', 'B', 'C', 'A', 'B', 'C', 'A', 'B', 'C'))
+        freespin_line_results = freespin_result.line_results
+        self.assertEqual(len(freespin_line_results), 3)
+        self.assertEqual(freespin_line_results[0].coin_out, 200)
+        self.assertEqual(freespin_line_results[1].coin_out, 80)
+        self.assertEqual(freespin_line_results[2].coin_out, 30)
+
+
 """
-todo : make a way to insert freespin reserve stops
-todo : debug total_coin_out
-todo : sort out spin log
+todo: better indents, refactoring
 
 00 spin: coin_in=10
     stop=(0, 2, 6, 5, 4)

@@ -2,6 +2,7 @@ import random
 import pdb
 from collections import namedtuple
 
+INDENT = '  '
 
 Symbol = namedtuple('Symbol', 'code is_wild')
 Paytable = namedtuple('Paytable', 'symbol count payout')
@@ -61,19 +62,24 @@ def get_line_symbols(reel_lens, symbols, payline):
     return tuple(line_symbols)
 
 
-def spin(machine, coin_in, is_free=False, stops=None):
+def spin(machine, coin_in, is_free=False, reserved_reelstops=None):
+    if reserved_reelstops and type(reserved_reelstops) is not list:
+        reserved_reelstops = [reserved_reelstops]
+
     target_reel = None
     if is_free:
         target_reel = machine.free_reels
     else:
         target_reel = machine.reels
 
-    if not stops:
-        stops = tuple(random.randrange(len(reel)) for reel in target_reel)
+    if reserved_reelstops and len(reserved_reelstops) > 0:
+        reelstop = reserved_reelstops.pop(0)
+    else:
+        reelstop = tuple(random.randrange(len(reel)) for reel in target_reel)
 
     symbol_list = []
     for reel_no, reel_height in enumerate(machine.reel_heights):
-        stop = stops[reel_no]
+        stop = reelstop[reel_no]
         reel = target_reel[reel_no]
         reel_len = len(reel)
         for row in range(reel_height):
@@ -94,9 +100,9 @@ def spin(machine, coin_in, is_free=False, stops=None):
     for sr in scatter_results:
         if sr.freespins > 0:
             for _ in range(sr.freespins):
-                sr.child_results.append(spin(machine, coin_in, True))
+                sr.child_results.append(spin(machine, coin_in, True, reserved_reelstops))
 
-    return Result(coin_in, stops, symbols, line_results, scatter_results) 
+    return Result(coin_in, reelstop, symbols, line_results, scatter_results) 
 
 def get_scatter_results(machine, coin_in, symbol_list):
     scatter_results = []
@@ -195,25 +201,34 @@ def get_symbols_per_line(reel_heights, symbol_list):
 
 def get_payline_symbols(reel_lens, symbols, payline):
     return get_line_symbols(reel_lens, symbols, payline)
+
+
+def make_indents(tabs):
+    return INDENT * tabs
     
 
-def create_log_header(s):
-    return '{:=<20}'.format(s + ' ')
+def create_log_header(tabs, s):
+    max_len = 60
+    tail_len = max_len - tabs * len(INDENT)
+    if tail_len < 0:
+        tail_len = 0
+    return ('{:=<'+str(tail_len)+'}').format(s + ' ')
 
 
 def make_spin_log(tabs, reel_heights, spin_result):
     log = ''
-    indents = '\t' * tabs
+    indents = make_indents(tabs)
 
     log += '{:02d} spin: coin_in={}\n'.format(i, spin_result.coin_in)
     log += indents + 'stop={}\n'.format(spin_result.stop_pos)
-    log += indents + create_log_header('symbols') + '\n'
-    symbols_txt = '\t' + ('\n'+indents+'\t').join([str(x) for x in get_symbols_per_line(reel_heights, spin_result.symbols)])
+    log += indents + create_log_header(tabs, 'symbols') + '\n'
+    symbols_txt = INDENT + ('\n'+indents+INDENT).join([str(x) for x in get_symbols_per_line(reel_heights, spin_result.symbols)])
     log += indents + '{}\n'.format(symbols_txt)
-    log += indents + '{}\n'.format(create_log_header('win lines') + ' ' + str(len(spin_result.line_results)))
+    if len(spin_result.line_results) > 0:
+        log += indents + '{}\n'.format(create_log_header(tabs, 'win lines') + ' ' + str(len(spin_result.line_results)))
     log += make_payline_log(tabs+1, reel_heights, spin_result)
     if len(spin_result.scatter_results) > 0:
-        log += indents + create_log_header('scatter result') + '\n'
+        log += indents + create_log_header(tabs, 'scatter result') + '\n'
         log += make_scatter_log(tabs+1, reel_heights, spin_result)
 
     total_coin_out = get_total_coin_out(spin_result)
@@ -232,7 +247,7 @@ def create_symbol_log(lines):
 
 
 def make_payline_log(tabs, reel_heights, result):
-    indents = tabs * '\t'
+    indents = make_indents(tabs)
 
     lines = get_symbols_per_line(reel_heights, result.symbols)
     symbols = create_symbol_log(lines)
@@ -247,13 +262,13 @@ def make_payline_log(tabs, reel_heights, result):
 
 def make_scatter_log(tabs, reel_heights, result):
     log = ''
-    indents = tabs * '\t'
+    indents = make_indents(tabs)
 
     scatter_results = result.scatter_results
     for sr in scatter_results:
         log += indents + 'scatters: {}, {}, {}\n'.format(sr.symbol, sr.count, sr.freespins) 
         if len(sr.child_results) > 0:
-            log += indents + create_log_header('child results') + '\n'
+            log += indents + create_log_header(tabs, 'child results') + '\n'
             for n, cr in enumerate(sr.child_results):
                 log += indents + make_spin_log(tabs+1, reel_heights, cr)
 
@@ -299,11 +314,11 @@ if __name__ == '__main__':
                            ('W', 'A', 'B', 'C', 'D', 'E', 'S'),
                            ('W', 'A', 'B', 'C', 'D', 'E'),
                            ('W', 'A', 'B', 'C', 'D', 'E', 'S')),
-                          (('W', 'A', 'B', 'C', 'D', 'E'),
-                           ('W', 'A', 'B', 'C', 'D', 'E'),
-                           ('W', 'A', 'B', 'C', 'D', 'E'),
-                           ('W', 'A', 'B', 'C', 'D', 'E'),
-                           ('W', 'A', 'B', 'C', 'D', 'E')))
+                          (('S', 'W', 'A', 'B', 'C', 'D', 'E'),
+                           ('S', 'W', 'A', 'B', 'C', 'D', 'E'),
+                           ('S', 'W', 'A', 'B', 'C', 'D', 'E'),
+                           ('S', 'W', 'A', 'B', 'C', 'D', 'E'),
+                           ('S', 'W', 'A', 'B', 'C', 'D', 'E')))
 
     test_spins = 10
     total_spins = 0
