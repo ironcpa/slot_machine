@@ -2,7 +2,7 @@ import random
 import pdb
 from collections import namedtuple
 
-INDENT = '  '
+INDENT = ' ' * 4
 
 Symbol = namedtuple('Symbol', 'code is_wild')
 Paytable = namedtuple('Paytable', 'symbol count payout')
@@ -190,12 +190,9 @@ def get_symbols_per_line(reel_heights, symbol_list):
     max_reel = len(reel_heights)
     max_row = reel_heights[0]
     lines = [[None for reel in range(max_reel)] for row in range(max_row)]
-    try:
-        for reel in range(max_reel):
-            for row in range(max_row):
-                lines[row][reel] = symbol_list[max_row * reel + row]
-    except:
-        print('xxx')
+    for reel in range(max_reel):
+        for row in range(max_row):
+            lines[row][reel] = symbol_list[max_row * reel + row]
     return lines   
 
 
@@ -235,6 +232,7 @@ def make_spin_log(tabs, reel_heights, spin_result):
     log += indents + 'total coin out = {}\n'.format(total_coin_out)
 
     return log
+
 
 def create_symbol_log(lines):
     symbols = '['
@@ -323,11 +321,10 @@ if __name__ == '__main__':
     test_spins = 10
     total_spins = 0
     total_coin_out = 0
-    for i in range(1):
+    for i in range(test_spins):
         results = spin(machine, 10, False, (4, 0, 4, 0, 4))
         #results = spin(machine, 10, False, (0, 0, 0, 0, 0))
         #results = spin(machine, 10)
         #make_spin_log(machine.reel_heights, results)
         print(make_spin_log(0, machine.reel_heights, results))
-        total_coin_out += get_total_coin_out(results)
 

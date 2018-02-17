@@ -460,7 +460,7 @@ class TestSlotMachine(TestCase):
 
 
 """
-todo: better indents, refactoring
+todo: collect n log summary data
 
 00 spin: coin_in=10
     stop=(0, 2, 6, 5, 4)
