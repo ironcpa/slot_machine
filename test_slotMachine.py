@@ -299,7 +299,7 @@ class TestSlotMachine(TestCase):
     def test_print_spin_log(self):
         line_results = [PaylineResult(0, 0),
                         PaylineResult(1, 1),]
-        result = Result(1, 1, ['a', 'b', 'c'], line_results)
+        result = Result('normal', 1, 1, ['a', 'b', 'c'], line_results)
 
         reel_heights = (1, 1, 1)
         log = make_payline_log(0, reel_heights, result)

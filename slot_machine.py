@@ -36,7 +36,8 @@ class ScatterResult:
 
 
 class Result:
-    def __init__(self, coin_in, stop_pos, symbols, line_results, scatter_results = []):
+    def __init__(self, spin_type, coin_in, stop_pos, symbols, line_results, scatter_results = []):
+        self.spin_type = spin_type
         self.coin_in = coin_in
         self.stop_pos = stop_pos
         self.symbols = symbols      # symbol sequence by rows by top to bottom
@@ -102,7 +103,8 @@ def spin(machine, coin_in, is_free=False, reserved_reelstops=None):
             for _ in range(sr.freespins):
                 sr.child_results.append(spin(machine, coin_in, True, reserved_reelstops))
 
-    return Result(coin_in, reelstop, symbols, line_results, scatter_results) 
+    spin_type = 'free' if is_free else 'normal'
+    return Result(spin_type, coin_in, reelstop, symbols, line_results, scatter_results) 
 
 def get_scatter_results(machine, coin_in, symbol_list):
     scatter_results = []
