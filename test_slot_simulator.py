@@ -13,18 +13,17 @@ def make_test_result(coin_in, coin_out):
 
 
 def create_test_machine():
-    machine = SlotMachine((3, 3, 3),
-                          (Symbol('A', False),
-                           Symbol('B', False),
-                           Symbol('C', False)),
-                          (Paytable('A', 3, 100),),
-                          (),
-                          ((0, 0, 0),
-                           (1, 1, 1),
-                           (2, 2, 2)),
-                          (('A', 'B', 'C'),
-                           ('A', 'B', 'C'),
-                           ('A', 'B', 'C')))
+    machine = SlotMachine(reel_heights=(3, 3, 3),
+                          symboldefs=(Symbol('A', False),
+                                      Symbol('B', False),
+                                      Symbol('C', False)),
+                          paytables=(Paytable('A', 3, 100),),
+                          paylines=((0, 0, 0),
+                                    (1, 1, 1),
+                                    (2, 2, 2)),
+                          reels=(('A', 'B', 'C'),
+                                 ('A', 'B', 'C'),
+                                 ('A', 'B', 'C')))
 
     return machine
 

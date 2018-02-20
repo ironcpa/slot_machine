@@ -18,8 +18,10 @@ class MainWindow(QMainWindow):
     def __init__(self, machine, spin_results=[]):
         super(MainWindow, self).__init__()
 
+        self.spin_results = []
+
         self.machine = machine
-        self.spin_results = spin_results
+        self.add_to_results(spin_results)
         self.curr_show_result_seq = self.total_spins()
 
         self.setGeometry(0, 0, 800, 600)
@@ -80,11 +82,14 @@ class MainWindow(QMainWindow):
         self.show_spin(self.curr_show_result_seq)
         print('spin : {}, len={}'.format(self.curr_show_result_seq, len(self.spin_results)))
 
-    def add_to_results(self, spin_result):
-        self.spin_results.append(spin_result)
-        for sr in spin_result.scatter_results:
-            for cr in sr.child_results:
-                self.add_to_results(cr)
+    def add_to_results(self, spin_results):
+        if type(spin_results) is not list: spin_results = [spin_results]
+
+        for r in spin_results:
+            self.spin_results.append(r)
+            for sr in r.scatter_results:
+                for cr in sr.child_results:
+                    self.add_to_results(cr)
 
     def show_spin(self, nth):
         show_result = self.spin_results[nth]
