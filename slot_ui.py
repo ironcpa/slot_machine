@@ -15,55 +15,12 @@ class MainWindow(QMainWindow):
     central_widget = None
     layout_container = None
 
-    def __init__(self):
+    def __init__(self, machine, spin_results=[]):
         super(MainWindow, self).__init__()
 
-        self.curr_show_result_seq = 0
-        self.spin_results = []
-
-        self.machine = SlotMachine((3, 3, 3, 3, 3),
-                              (Symbol('W', True),
-                               Symbol('A', False),
-                               Symbol('B', False),
-                               Symbol('C', False),
-                               Symbol('D', False),
-                               Symbol('E', False),
-                               Symbol('S', False)),
-                              (Paytable('A', 5, 100),
-                               Paytable('A', 4, 50),
-                               Paytable('A', 3, 20),
-                               Paytable('B', 5, 80),
-                               Paytable('B', 3, 40),
-                               Paytable('B', 2, 10),
-                               Paytable('C', 5, 30),
-                               Paytable('C', 4, 20),
-                               Paytable('C', 3, 10),
-                               Paytable('D', 5, 20),
-                               Paytable('D', 4, 10),
-                               Paytable('D', 3, 5),
-                               Paytable('E', 5, 20),
-                               Paytable('E', 4, 10),
-                               Paytable('E', 3, 5)),
-                              (ScatterPaytable('S', 3, 'freespin', 3),),
-                              ((0, 0, 0, 0, 0),
-                               (1, 1, 1, 1, 1),
-                               (2, 2, 2, 2, 2),
-                               (0, 1, 1, 1, 2),
-                               (2, 1, 1, 1, 0),
-                               (0, 0, 0, 1, 2),
-                               (2, 1, 0, 0, 0),
-                               (0, 0, 1, 2, 2),
-                               (2, 2, 1, 0, 0)),
-                              (('W', 'A', 'B', 'C', 'D', 'E', 'S'),
-                               ('W', 'A', 'B', 'C', 'D', 'E'),
-                               ('W', 'A', 'B', 'C', 'D', 'E', 'S'),
-                               ('W', 'A', 'B', 'C', 'D', 'E'),
-                               ('W', 'A', 'B', 'C', 'D', 'E', 'S')),
-                              (('S', 'W', 'A', 'B', 'C', 'D', 'E'),
-                               ('S', 'W', 'A', 'B', 'C', 'D', 'E'),
-                               ('S', 'W', 'A', 'B', 'C', 'D', 'E'),
-                               ('S', 'W', 'A', 'B', 'C', 'D', 'E'),
-                               ('S', 'W', 'A', 'B', 'C', 'D', 'E')))
+        self.machine = machine
+        self.spin_results = spin_results
+        self.curr_show_result_seq = self.total_spins()
 
         self.setGeometry(0, 0, 800, 600)
 
@@ -86,8 +43,12 @@ class MainWindow(QMainWindow):
 
         self.btn_spin.clicked.connect(self.spin)
 
-        test_stops = (5, 5, 5, 5, 5)
-        self.spin(test_stops)
+        if self.total_spins() > 0:
+            self.show_last_spin()
+        else:
+            '''gen init spin'''
+            test_stops = (5, 5, 5, 5, 5)
+            self.spin(test_stops)
 
     def keyPressEvent(self, event: QtGui.QKeyEvent):
         key = event.key()
@@ -315,6 +276,15 @@ class ScatterResultItem(QGraphicsTextItem):
         return 'scatter: {}x{} x{}, free={}'.format(data.symbol, data.count, data.coin_out, data.freespins)
 
 
+def show_spin_results_window(machine, spin_results):
+    turn_off_pyqt_loop_log()
+
+    app = QApplication(sys.argv)
+    w = MainWindow(machine, spin_results)
+    w.show()
+    sys.exit(app.exec_())
+
+
 def turn_off_pyqt_loop_log():
     # to remove log on pdb debuggin
     from PyQt5.QtCore import pyqtRemoveInputHook
@@ -326,6 +296,6 @@ if __name__ == '__main__':
     turn_off_pyqt_loop_log()
 
     app = QApplication(sys.argv)
-    w = MainWindow()
+    w = MainWindow(slot_machine.create_sample_machine())
     w.show()
     sys.exit(app.exec_())

@@ -214,11 +214,11 @@ def create_log_header(tabs, s):
     return ('{:=<'+str(tail_len)+'}').format(s + ' ')
 
 
-def make_spin_log(tabs, reel_heights, spin_result):
+def make_spin_log(tabs, reel_heights, spin_no, spin_result):
     log = ''
     indents = make_indents(tabs)
 
-    log += '{:02d} spin: coin_in={}\n'.format(i, spin_result.coin_in)
+    log += '{:02d} spin: coin_in={}\n'.format(spin_no, spin_result.coin_in)
     log += indents + 'stop={}\n'.format(spin_result.stop_pos)
     log += indents + create_log_header(tabs, 'symbols') + '\n'
     symbols_txt = INDENT + ('\n'+indents+INDENT).join([str(x) for x in get_symbols_per_line(reel_heights, spin_result.symbols)])
@@ -270,12 +270,12 @@ def make_scatter_log(tabs, reel_heights, result):
         if len(sr.child_results) > 0:
             log += indents + create_log_header(tabs, 'child results') + '\n'
             for n, cr in enumerate(sr.child_results):
-                log += indents + make_spin_log(tabs+1, reel_heights, cr)
+                log += indents + make_spin_log(tabs+1, reel_heights, n, cr)
 
     return log
 
 
-if __name__ == '__main__':
+def create_sample_machine():
     machine = SlotMachine((3, 3, 3, 3, 3),
                           (Symbol('W', True),
                            Symbol('A', False),
@@ -320,13 +320,16 @@ if __name__ == '__main__':
                            ('S', 'W', 'A', 'B', 'C', 'D', 'E'),
                            ('S', 'W', 'A', 'B', 'C', 'D', 'E')))
 
+    return machine
+
+
+if __name__ == '__main__':
+    machine = create_sample_machine()
+
     test_spins = 10
     total_spins = 0
     total_coin_out = 0
     for i in range(test_spins):
-        results = spin(machine, 10, False, (4, 0, 4, 0, 4))
-        #results = spin(machine, 10, False, (0, 0, 0, 0, 0))
-        #results = spin(machine, 10)
-        #make_spin_log(machine.reel_heights, results)
-        print(make_spin_log(0, machine.reel_heights, results))
+        result = spin(machine, 10, False, (4, 0, 4, 0, 4))
+        print(make_spin_log(0, machine.reel_heights, i, result))
 
