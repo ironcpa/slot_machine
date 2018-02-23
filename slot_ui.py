@@ -1,14 +1,14 @@
-import PyQt5.QtWidgets
 import sys
-from PyQt5 import QtGui, QtCore, QtWidgets
-from PyQt5.QtCore import Qt, QPoint, QLineF, QRectF, QEvent
-from PyQt5.QtGui import QPainterPath, QPen, QBrush, QColor
-from PyQt5.QtWidgets import QApplication, QWidget, QGraphicsView, QVBoxLayout, QGraphicsScene, QMainWindow, QGraphicsEllipseItem, QGraphicsPathItem, QGraphicsItem, QGraphicsTextItem, QGraphicsRectItem
-from PyQt5.QtWidgets import QHBoxLayout
+from PyQt5.QtCore import Qt, QPoint, QLineF, QRectF
+from PyQt5.QtGui import QBrush, QColor
+from PyQt5.QtWidgets import QApplication, QWidget, QGraphicsView, QVBoxLayout
+from PyQt5.QtWidgets import QGraphicsScene, QMainWindow
+from PyQt5.QtWidgets import QGraphicsItem, QGraphicsTextItem
+from PyQt5.QtWidgets import QGraphicsRectItem, QHBoxLayout
 from PyQt5.QtWidgets import QPushButton, QGraphicsLineItem
 
 import slot_machine
-from slot_machine import *
+from slot_machine import get_symbols_per_line
 
 
 class MainWindow(QMainWindow):
@@ -32,8 +32,9 @@ class MainWindow(QMainWindow):
         self.layout = QVBoxLayout()
         self.central_widget.setLayout(self.layout)
         self.setCentralWidget(self.central_widget)
-        
-        self.machine_ui = SlotMachineWidget(self.machine)
+
+        self.machine_ui = SlotMachineWidget(machine.reel_heights,
+                                            machine.paylines)
         self.machine_ui.setFocusPolicy(Qt.NoFocus)
         self.layout.addWidget(self.machine_ui)
 
@@ -52,9 +53,8 @@ class MainWindow(QMainWindow):
             test_stops = (5, 5, 5, 5, 5)
             self.spin(test_stops)
 
-    def keyPressEvent(self, event: QtGui.QKeyEvent):
+    def keyPressEvent(self, event):
         key = event.key()
-        mod = QApplication.keyboardModifiers()
         if key == Qt.Key_Return:
             if self.curr_show_result_seq == len(self.spin_results) - 1:
                 self.spin()
@@ -80,10 +80,12 @@ class MainWindow(QMainWindow):
         self.add_to_results(spin_result)
 
         self.show_spin(self.curr_show_result_seq)
-        print('spin : {}, len={}'.format(self.curr_show_result_seq, len(self.spin_results)))
+        print('spin : {}, len={}'.format(self.curr_show_result_seq,
+                                         len(self.spin_results)))
 
     def add_to_results(self, spin_results):
-        if type(spin_results) is not list: spin_results = [spin_results]
+        if type(spin_results) is not list:
+            spin_results = [spin_results]
 
         for r in spin_results:
             self.spin_results.append(r)
@@ -102,7 +104,8 @@ class MainWindow(QMainWindow):
 
         self.curr_show_result_seq -= 1
         self.show_spin(self.curr_show_result_seq)
-        print('show prev: {}, len={}'.format(self.curr_show_result_seq, self.total_spins()))
+        print('show prev: {}, len={}'.format(self.curr_show_result_seq,
+                                             self.total_spins()))
 
     def show_next_spin(self):
         if self.curr_show_result_seq == len(self.spin_results)-1:
@@ -111,7 +114,8 @@ class MainWindow(QMainWindow):
 
         self.curr_show_result_seq += 1
         self.show_spin(self.curr_show_result_seq)
-        print('show next: {}, len={}'.format(self.curr_show_result_seq, self.total_spins()))
+        print('show next: {}, len={}'.format(self.curr_show_result_seq,
+                                             self.total_spins()))
 
     def show_first_spin(self):
         self.curr_show_result_seq = 0
@@ -126,6 +130,20 @@ class SlotMachineWidget(QGraphicsView):
     central_widget = None
     layout_container = None
 
+    def __init__(self, reel_heights, paylines):
+        super(SlotMachineWidget, self).__init__()
+
+        self.payline_off = 25
+
+        self.pay_h = 20
+        self.scatter_h = 20
+
+        self.reel_heights = reel_heights
+        self.paylines = paylines
+
+        self.setScene(QGraphicsScene())
+
+    '''
     def __init__(self, machine):
         super(SlotMachineWidget, self).__init__()
 
@@ -137,6 +155,7 @@ class SlotMachineWidget(QGraphicsView):
         self.machine = machine
 
         self.setScene(QGraphicsScene())
+    '''
 
     def show_result(self, spin_no, total_spins, spin_result):
         self.clear_all()
@@ -144,19 +163,23 @@ class SlotMachineWidget(QGraphicsView):
         self.show_symbols(spin_result.symbols)
         self.show_paylines(spin_result.line_results)
         self.show_payout(spin_result.line_results)
-        self.show_scatter(spin_result.scatter_results, len(spin_result.line_results))
+        self.show_scatter(spin_result.scatter_results,
+                          len(spin_result.line_results))
         self.show_spin_no(spin_no, total_spins, spin_result.spin_type)
 
     def clear_all(self):
         self.scene().clear()
 
     def show_spin_no(self, no, total_spins, spin_type):
-        self.spin_no_display = QGraphicsTextItem('spin no: {} / {} {}'.format(no + 1, total_spins, spin_type))
+        str_spin_no = 'spin no: {} / {} {}'.format(no + 1,
+                                                   total_spins, spin_type)
+        self.spin_no_display = QGraphicsTextItem(str_spin_no)
         self.spin_no_display.setPos(0, -20)
         self.scene().addItem(self.spin_no_display)
 
     def show_symbols(self, symbols):
-        symbols_per_line = get_symbols_per_line(self.machine.reel_heights, symbols)
+        symbols_per_line = get_symbols_per_line(self.reel_heights,
+                                                symbols)
 
         print(symbols_per_line)
         for row, r in enumerate(symbols_per_line):
@@ -169,7 +192,7 @@ class SlotMachineWidget(QGraphicsView):
 
     def show_paylines(self, line_results):
         for line_result in line_results:
-            win_payline = self.machine.paylines[line_result.line_id]
+            win_payline = self.paylines[line_result.line_id]
             self.show_payline(line_result.line_id, win_payline)
 
     def show_payline(self, line_id, payline_def):
@@ -200,7 +223,7 @@ class SlotMachineWidget(QGraphicsView):
     def show_scatter(self, scatter_results, line_win_count):
         scatter_h = 20
         scatter_y = 50 * 3 + line_win_count * self.pay_h + 10
-        
+
         for i, win_data in enumerate(scatter_results):
             sr = ScatterResultItem(win_data)
             self.scene().addItem(sr)
@@ -216,7 +239,7 @@ class SymbolItem(QGraphicsRectItem):
         text_item = QGraphicsTextItem(code)
         text_item.setParentItem(self)
 
-        #self.setBrush(QBrush(QColor('#f2a2e7')))
+        # self.setBrush(QBrush(QColor('#f2a2e7')))
         self.select_color(code)
 
     def select_color(self, code):
@@ -238,7 +261,7 @@ class PaylineItem(QGraphicsItem):
         self.points = points
 
         self.bounding_rect = QRectF(0, 0, 50*5, 50*3)
-        
+
         self.set_lines()
 
     def boundingRect(self):
@@ -275,10 +298,14 @@ class LineResultItem(QGraphicsTextItem):
 
 class ScatterResultItem(QGraphicsTextItem):
     def __init__(self, scatter_result):
-        super(ScatterResultItem, self).__init__(self.format_result(scatter_result))
+        super(ScatterResultItem,
+              self).__init__(self.format_result(scatter_result))
 
     def format_result(self, data):
-        return 'scatter: {}x{} x{}, free={}'.format(data.symbol, data.count, data.coin_out, data.freespins)
+        return 'scatter: {}x{} x{}, free={}'.format(data.symbol,
+                                                    data.count,
+                                                    data.coin_out,
+                                                    data.freespins)
 
 
 def show_spin_results_window(machine, spin_results):
@@ -293,7 +320,7 @@ def show_spin_results_window(machine, spin_results):
 def turn_off_pyqt_loop_log():
     # to remove log on pdb debuggin
     from PyQt5.QtCore import pyqtRemoveInputHook
-    from pdb import set_trace
+    # from pdb import set_trace
     pyqtRemoveInputHook()
 
 

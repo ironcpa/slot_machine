@@ -1,9 +1,9 @@
 import unittest
 from unittest import TestCase
 import slot_machine as sm
-from slot_machine import *
+from slot_machine import SlotMachine, Symbol, Paytable, Result, PaylineResult
 import simulator as ss
-from simulator import *
+from simulator import simulate_slot
 
 
 def make_test_result(coin_in, coin_out):
@@ -31,7 +31,7 @@ def create_test_machine():
 class TestSlotSimulator(TestCase):
     def test_single_run(self):
         results = simulate_slot(create_test_machine(), 1)
-        
+
         self.assertEqual(len(results), 1)
         self.assertEqual(type(results[0]), sm.Result)
 
@@ -60,10 +60,10 @@ class TestSlotSimulator(TestCase):
 
     def test_machine_summary_data(self):
         machine = create_test_machine()
-        
-        stop_plan = {0:(0, 0, 0),
-                     1:(1, 1, 1),
-                     2:(2, 2, 2)}
+
+        stop_plan = {0: (0, 0, 0),
+                     1: (1, 1, 1),
+                     2: (2, 2, 2)}
 
         results = simulate_slot(machine, 1, stop_plan)
         summary = ss.make_summary(results)

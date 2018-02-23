@@ -1,6 +1,5 @@
 from collections import namedtuple
-import slot_machine
-from slot_machine import *
+from slot_machine import spin, create_sample_machine, make_spin_log
 import slot_ui
 
 
@@ -37,16 +36,22 @@ def make_summary(spin_results):
         total_wins += 1 if r_coin_out > 0 else 0
         total_coin_out += r_coin_out
 
-    summary = Summary(len(spin_results), total_wins, total_coin_in, total_coin_out)
+    summary = Summary(len(spin_results),
+                      total_wins,
+                      total_coin_in,
+                      total_coin_out)
 
     return summary
 
 
 def make_summary_print_format(summary):
     format_str = '{} spins, {} wins, total coin in : {}, total coin out : {}'
-    p_form = format_str.format(summary.spins, summary.wins, summary.coin_in, summary.coin_out)
-    
-    return p_form
+    form = format_str.format(summary.spins,
+                             summary.wins,
+                             summary.coin_in,
+                             summary.coin_out)
+
+    return form
 
 
 def payout(summary):
@@ -70,4 +75,3 @@ if __name__ == '__main__':
     print(make_summary_print_format(summary))
 
     slot_ui.show_spin_results_window(machine, results)
-
