@@ -1,0 +1,57 @@
+show payline
+    show payline id
+        better payline id : to differanciate between lines
+show payout
+show scatters
+show sub result at the same time w/ base spin result
+
+
+about eventFilter
+    eventFilter returns True -> target object don't handle event
+
+find a way to inject multiple spin reserved stops - not multiple stops for child spins(free)
+    list of list??
+
+todo
+    show spin type : need to differentiate free spins from normal
+
+함수형으로 만들다 보니 spin함수에 machine을 넣어주는 방식으로 했는데, 
+ui에서 machine을 가지고 있어야 하는 형태가 되어 버렸다.
+ui에서 machine 로직을 분리하면서 함수형으로 만드는 방법을 무얼까?
+    interface함수에는 실체화 대상 데이터가 들어있어선 안돼겠다.
+    모든 건 module 단위로 구분하고 실체화 로직단위를 local과 net base 두가지로 구분
+    local module에는 실체화 로직이 존재
+    net module에는 실체화 로직 없이 net interface call들만 존재
+    ui 계층에서 로직 주입하고 싶으면 결국 상태를 가지게 되네?
+    아이고, 함수형은 어렵네. 결국 데이터 형태로 상태를 가지게 되네
+
+흠
+    그런데 ui module 이 이미 slot machine 로직을 다 알고 있네?
+    이미 slot_machine 모듈을 import 하고 있어.
+    구체화 데이터는 더이상 접근하지 않는데 
+    사용하는 함수들이 뭔지 찾아보자!
+    어머나! spin() 함수를 사용하고 있네?
+    아놔. 구분할 수 없단 말인가? client가 사용할 수 있는 spin 함수가 어딘가 
+    있긴 해야 할것 아닌가?
+    ui에 spin 함수를 어떻게 알려주지? - 구현내용은 감춘 상태로
+    oop면 간단하지, 그런데 객체로 묶여 있지 않은 함수 나열이라면?
+    함수형일 때 네트워크 용 인터페이스 어떻게 구분해? 이대로 찾아볼까?
+
+다시 생각해 보니 답을 알겠다.
+    일단 local, remote 공용 함수와 데이터를 구분 module 만들어야 한다.
+    그 다음 remote용 client ui를 구성해야 함
+    remote client는 함수와 데이터가 local용과 확연히 구분될 수 있다.
+
+ok 공용 부품 구분까지 했다.
+    이제 spin 결과 데이터를 어디까지 공용화(local:remote)할 것인가의 문제 남음.
+    http를 통한 텍스트 결과로 받을 건데
+    local에서 사용하는 object로 convert 할 것인가?
+
+data definitions
+    slot definition
+        using dict
+    result definition
+        using dict
+        using json as net transfer format
+    dict 와 json 사용 의미 -> 더이상 설계도 class 안 쓰겠다 의미
+
