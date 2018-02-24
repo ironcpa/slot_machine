@@ -32,8 +32,8 @@ def to_json(spin_result):
     lr_dicts = []
     for lr in spin_result.line_results:
         ld = {}
-        ld['.line_id'] = lr.line_id
-        ld['.coin_out'] = lr.coin_out
+        ld['line_id'] = lr.line_id
+        ld['coin_out'] = lr.coin_out
         lr_dicts.append(ld)
     result_dict['line_results'] = lr_dicts
 
@@ -44,8 +44,10 @@ def to_json(spin_result):
         scatter_result_dict['count'] = sr.count
         scatter_result_dict['coin_out'] = sr.coin_out
         scatter_result_dict['freespins'] = sr.freespins
+        cr_dicts = []
         for cr in sr.child_results:
-            scatter_result_dict['child_results'] = to_json(cr)
+            cr_dicts.append(to_json(cr))
+        scatter_result_dict['child_results'] = cr_dicts
         sr_dicts.append(scatter_result_dict)
 
     result_dict['scatter_results'] = sr_dicts
@@ -60,14 +62,6 @@ def restfulresult(spin_results):
 
     rdict = {'results': results}
     return json.dumps(rdict)
-
-    '''
-    print('debug: len of results', len(spin_results))
-    if len(spin_results) > 1:
-        return "{'aaa': 123, 'bbb': 456}"
-    else:
-        return "{'aaa': 123}"
-    '''
 
 
 if __name__ == '__main__':

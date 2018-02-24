@@ -1,11 +1,13 @@
 import net_slot_machine
 import sys
+import json
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtWidgets import QHBoxLayout
 from PyQt5.QtWidgets import QPushButton
 import slot_ui
+import slot_data
 
 from slot_ui import SlotMachineWidget
 
@@ -61,7 +63,8 @@ class MainWindow(QMainWindow):
     def keyPressEvent(self, event):
         key = event.key()
         if key == Qt.Key_Return:
-            if self.curr_show_result_seq == len(self.spin_results) - 1:
+            if len(self.spin_results) == 0 \
+               or self.curr_show_result_seq == len(self.spin_results) - 1:
                 self.spin()
             else:
                 self.show_next_spin()
@@ -81,15 +84,24 @@ class MainWindow(QMainWindow):
 
     def spin(self, test_stops=None):
         """diff from local_window"""
-        spin_result = net_slot_machine.spin(10, False, test_stops)
+        # spin_result = net_slot_machine.spin(10, False, test_stops)
+        json_res = net_slot_machine.spin(10, False, test_stops)
+        json_results = json.loads(json_res)['results']
+
+        spin_results = []
+        for r in json_results:
+            spin_results.append(slot_data.to_spin_result(r))
+
         self.curr_show_result_seq = len(self.spin_results)
-        self.add_to_results(spin_result)
+        self.add_to_results(spin_results)
 
         self.show_spin(self.curr_show_result_seq)
         print('spin : {}, len={}'.format(self.curr_show_result_seq,
                                          len(self.spin_results)))
 
     def add_to_results(self, spin_results):
+        print('debug:', spin_results)
+
         """diff from local_windows spin_result"""
         if type(spin_results) is not list:
             spin_results = [spin_results]
@@ -131,21 +143,6 @@ class MainWindow(QMainWindow):
     def show_last_spin(self):
         self.curr_show_result_seq = self.total_spins()-1
         self.show_spin(self.curr_show_result_seq)
-
-
-if __name__ == '__main__':
-    '''
-    how to make thin client?
-     - create net-machine module
-     - net-machine module provide belows
-      - interface functions to consumers(client code)
-      - import local-machine to use exiting data and functions
-    '''
-    result = net_slot_machine.spin(100)
-    print(result)
-
-    results = net_slot_machine.spins(100, 5)
-    print(results)
 
 
 if __name__ == '__main__':
