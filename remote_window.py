@@ -13,20 +13,17 @@ from slot_ui import SlotMachineWidget
 
 
 class MainWindow(QMainWindow):
-    """
-    todo:
-        extract common method to slot_ui.py
-    """
     central_widget = None
     layout_container = None
 
-    def __init__(self, machine, spin_results=[]):
+    def __init__(self):
         super(MainWindow, self).__init__()
+
+        reel_heights, payline_def = net_slot_machine.get_slot_def()
 
         self.spin_results = []
 
-        self.machine = machine
-        self.add_to_results(spin_results)
+        self.add_to_results(self.spin_results)
         self.curr_show_result_seq = self.total_spins()
 
         self.setGeometry(0, 0, 800, 600)
@@ -38,8 +35,8 @@ class MainWindow(QMainWindow):
         self.central_widget.setLayout(self.layout)
         self.setCentralWidget(self.central_widget)
 
-        self.machine_ui = SlotMachineWidget(machine.reel_heights,
-                                            machine.paylines)
+        self.machine_ui = SlotMachineWidget(reel_heights,
+                                            payline_def)
         self.machine_ui.setFocusPolicy(Qt.NoFocus)
         self.layout.addWidget(self.machine_ui)
 
@@ -149,6 +146,6 @@ if __name__ == '__main__':
     slot_ui.turn_off_pyqt_loop_log()
 
     app = QApplication(sys.argv)
-    w = MainWindow(net_slot_machine.get_dummy_machine())
+    w = MainWindow()
     w.show()
     sys.exit(app.exec_())

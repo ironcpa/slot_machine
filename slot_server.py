@@ -19,6 +19,13 @@ def spin():
     return restfulresult(results)
 
 
+@app.route('/slot_def')
+def slot_def():
+    slot_def = {'reel_heights': machine.reel_heights,
+                'paylines': machine.paylines}
+    return json.dumps(slot_def)
+
+
 def to_json(spin_result):
     result_dict = {}
 
