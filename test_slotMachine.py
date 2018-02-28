@@ -372,6 +372,9 @@ class TestSlotMachine(TestCase):
                                ('A',),))
         test_stop = (0, 0, 0)
         result = sm.spin(machine, 1, False, test_stop)
+
+        scatter_result = result.scatter_results[0]
+
         self.assertEqual(len(result.scatter_results), 1)
         scatter_result = result.scatter_results[0]
         self.assertEqual(scatter_result.symbol, 'S')
@@ -410,7 +413,10 @@ class TestSlotMachine(TestCase):
         result = sm.spin(machine, 1, False, test_stops)
         scatter_result = result.scatter_results[0]
 
+        self.assertEqual(len(scatter_result.child_results), 2)
+
         freespin_result = scatter_result.child_results[0]
+        self.assertEqual(freespin_result.stop_pos, (0, 0, 0))
         self.assertEqual(freespin_result.symbols,
                          ('A', 'B', 'C', 'A', 'B', 'C', 'A', 'B', 'C'))
         freespin_line_results = freespin_result.line_results
@@ -419,6 +425,7 @@ class TestSlotMachine(TestCase):
         self.assertEqual(freespin_line_results[2].coin_out, 30)
 
         freespin_result = scatter_result.child_results[1]
+        self.assertEqual(freespin_result.stop_pos, (1, 1, 1))
         self.assertEqual(freespin_result.symbols,
                          ('B', 'C', 'A', 'B', 'C', 'A', 'B', 'C', 'A'))
         freespin_line_results = freespin_result.line_results
@@ -446,11 +453,17 @@ class TestSlotMachine(TestCase):
                               (('S', 'A', 'B', 'C'),
                                ('S', 'A', 'B', 'C'),
                                ('S', 'A', 'B', 'C'),))
+
         test_stops = [(0, 0, 0), (1, 1, 1), (0, 0, 0), (1, 1, 1)]
         result = sm.spin(machine, 1, False, test_stops)
+        self.assertEqual(result.stop_pos, (0, 0, 0))
+        self.assertEqual(result.symbols,
+                         ('S', 'B', 'C', 'S', 'A', 'C', 'S', 'B', 'A'))
+
         scatter_result = result.scatter_results[0]
 
         freespin_result = scatter_result.child_results[0]
+        self.assertEqual(freespin_result.stop_pos, (1, 1, 1))
         self.assertEqual(freespin_result.symbols,
                          ('A', 'B', 'C', 'A', 'B', 'C', 'A', 'B', 'C'))
         freespin_line_results = freespin_result.line_results
@@ -459,6 +472,7 @@ class TestSlotMachine(TestCase):
         self.assertEqual(freespin_line_results[2].coin_out, 30)
 
         freespin_result = scatter_result.child_results[1]
+        self.assertEqual(freespin_result.stop_pos, (0, 0, 0))
         self.assertEqual(freespin_result.symbols,
                          ('S', 'A', 'B', 'S', 'A', 'B', 'S', 'A', 'B'))
         freespin_line_results = freespin_result.line_results

@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QPushButton
 
 import slot_machine
 
-from slot_ui import SlotMachineWidget
+from slot_ui import SlotMachineWidget, turn_off_pyqt_loop_log
 
 
 class MainWindow(QMainWindow):
@@ -132,13 +132,6 @@ def show_spin_results_window(machine, spin_results):
     w = MainWindow(machine, spin_results)
     w.show()
     sys.exit(app.exec_())
-
-
-def turn_off_pyqt_loop_log():
-    # to remove log on pdb debuggin
-    from PyQt5.QtCore import pyqtRemoveInputHook
-    # from pdb import set_trace
-    pyqtRemoveInputHook()
 
 
 if __name__ == '__main__':

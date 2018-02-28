@@ -1,5 +1,8 @@
 import random
 from collections import namedtuple
+from slot_data import Result
+from slot_data import PaylineResult
+from slot_data import ScatterResult
 
 INDENT = ' ' * 4
 
@@ -24,45 +27,6 @@ class SlotMachine:
         self.paylines = paylines
         self.reels = reels
         self.free_reels = free_reels
-
-
-class PaylineResult:
-    def __init__(self, line_id, coin_out):
-        self.line_id = line_id
-        self.coin_out = coin_out
-
-
-class ScatterResult:
-    def __init__(self, symbol, count, coin_out, freespins=0):
-        self.symbol = symbol
-        self.count = count
-        self.coin_out = coin_out
-        self.freespins = freespins
-        self.child_results = []
-
-
-class Result:
-    def __init__(self,
-                 spin_type,
-                 coin_in,
-                 stop_pos,
-                 symbols,
-                 line_results,
-                 scatter_results=[]):
-        self.spin_type = spin_type
-        self.coin_in = coin_in
-        self.stop_pos = stop_pos
-        self.symbols = symbols      # symbol sequence by rows by top to bottom
-        self.line_results = line_results
-        self.scatter_results = scatter_results
-
-    def len(self):
-        return len(self.line_results)
-
-    def fst(self):
-        if self.line_results and self.len() > 0:
-            return self.line_results[0]
-        return None
 
 
 def get_line_symbols(reel_lens, symbols, payline):
@@ -121,6 +85,7 @@ def spin(machine, coin_in, is_free=False, reserved_reelstops=None):
                                              reserved_reelstops))
 
     spin_type = 'free' if is_free else 'normal'
+
     return Result(spin_type,
                   coin_in,
                   reelstop,

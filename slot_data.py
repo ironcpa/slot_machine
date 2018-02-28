@@ -5,12 +5,15 @@ class PaylineResult:
 
 
 class ScatterResult:
-    def __init__(self, symbol, count, coin_out, freespins=0, child_results=[]):
+    def __init__(self, symbol, count, coin_out, freespins=0, child_results=None):
         self.symbol = symbol
         self.count = count
         self.coin_out = coin_out
         self.freespins = freespins
-        self.child_results = child_results
+        if child_results:
+            self.child_results = child_results
+        else:
+            self.child_results = []
 
 
 class Result:
@@ -27,6 +30,15 @@ class Result:
         self.symbols = symbols      # symbol sequence by rows by top to bottom
         self.line_results = line_results
         self.scatter_results = scatter_results
+
+    def __repr__(self):
+        return '{}, in={}, stop={}, symbols={}, ' \
+               'lines={}, scatters={}'.format(self.spin_type,
+                                              self.coin_in,
+                                              self.stop_pos,
+                                              self.symbols,
+                                              len(self.line_results),
+                                              len(self.scatter_results))
 
     def len(self):
         return len(self.line_results)

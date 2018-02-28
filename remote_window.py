@@ -6,10 +6,9 @@ from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtWidgets import QHBoxLayout
 from PyQt5.QtWidgets import QPushButton
-import slot_ui
 import slot_data
 
-from slot_ui import SlotMachineWidget
+from slot_ui import SlotMachineWidget, turn_off_pyqt_loop_log
 
 
 class MainWindow(QMainWindow):
@@ -47,15 +46,6 @@ class MainWindow(QMainWindow):
         self.button_group.addWidget(self.btn_spin)
 
         self.btn_spin.clicked.connect(self.spin)
-
-        '''
-        if self.total_spins() > 0:
-            self.show_last_spin()
-        else:
-            # gen init spin
-            test_stops = (5, 5, 5, 5, 5)
-            self.spin(test_stops)
-        '''
 
     def keyPressEvent(self, event):
         key = event.key()
@@ -143,7 +133,7 @@ class MainWindow(QMainWindow):
 
 
 if __name__ == '__main__':
-    slot_ui.turn_off_pyqt_loop_log()
+    turn_off_pyqt_loop_log()
 
     app = QApplication(sys.argv)
     w = MainWindow()
