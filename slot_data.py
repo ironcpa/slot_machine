@@ -5,15 +5,20 @@ class PaylineResult:
 
 
 class ScatterResult:
-    def __init__(self, symbol, count, coin_out, freespins=0, child_results=None):
+    def __init__(self,
+                 symbol,
+                 count,
+                 coin_out,
+                 freespins=0,
+                 child_results=None):
+        if child_results is None:
+            child_results = []
+
         self.symbol = symbol
         self.count = count
         self.coin_out = coin_out
         self.freespins = freespins
-        if child_results:
-            self.child_results = child_results
-        else:
-            self.child_results = []
+        self.child_results = child_results
 
 
 class Result:

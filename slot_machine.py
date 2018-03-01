@@ -64,13 +64,15 @@ def spin(machine, coin_in, is_free=False, reserved_reelstops=None):
             symbol_list.append(reel[i])
     symbols = tuple(symbol_list)
 
+    line_bet = coin_in / len(machine.paylines)
+
     line_results = []
     for i, payline in enumerate(machine.paylines):
         line_symbols = get_line_symbols(machine.reel_heights, symbols, payline)
         payout_rate = calc_payout_rate(machine.symboldefs,
                                        machine.paytables,
                                        line_symbols)
-        coin_out = coin_in * payout_rate
+        coin_out = line_bet * payout_rate
 
         if coin_out > 0:
             line_results.append(PaylineResult(i, coin_out))
@@ -164,6 +166,15 @@ def calc_payout_rate(symboldefs, paytables, symbols):
     return get_payout(paytables, l_symbol, matches)
 
 
+def get_spin_coin_in(spin_result):
+    coin_in = 0
+
+    if spin_result.spin_type == 'normal':
+        coin_in += spin_result.coin_in
+
+    return coin_in
+
+
 def get_total_coin_out(spin_result):
     # return sum([r.coin_out for r in spin_result.line_results])
 
@@ -225,6 +236,10 @@ def make_spin_log(tabs, reel_heights, spin_no, spin_result):
     if len(spin_result.scatter_results) > 0:
         log += indents + create_log_header(tabs, 'scatter result') + '\n'
         log += make_scatter_log(tabs+1, reel_heights, spin_result)
+
+    spin_coin_in = get_spin_coin_in(spin_result)
+    if spin_coin_in > 0:
+        log += indents + 'coin in = {}\n'.format(spin_coin_in)
 
     total_coin_out = get_total_coin_out(spin_result)
     log += indents + 'total coin out = {}\n'.format(total_coin_out)
@@ -301,10 +316,8 @@ def create_sample_machine():
                                      Paytable('E', 5, 20),
                                      Paytable('E', 4, 10),
                                      Paytable('E', 3, 5)),
-                          scatter_paytables=(ScatterPaytable('S',
-                                                             3,
-                                                             'freespin',
-                                                             3),),
+                          scatter_paytables=(
+                                     ScatterPaytable('S', 3, 'freespin', 3),),
                           paylines=((0, 0, 0, 0, 0),
                                     (1, 1, 1, 1, 1),
                                     (2, 2, 2, 2, 2),
@@ -313,7 +326,8 @@ def create_sample_machine():
                                     (0, 0, 0, 1, 2),
                                     (2, 1, 0, 0, 0),
                                     (0, 0, 1, 2, 2),
-                                    (2, 2, 1, 0, 0)),
+                                    (2, 2, 1, 0, 0),
+                                    (2, 2, 1, 2, 2)),
                           reels=(('W', 'A', 'B', 'C', 'D', 'E', 'S'),
                                  ('W', 'A', 'B', 'C', 'D', 'E'),
                                  ('W', 'A', 'B', 'C', 'D', 'E', 'S'),
@@ -333,7 +347,18 @@ if __name__ == '__main__':
 
     test_spins = 10
     total_spins = 0
+    base_coin_in = 1
+    total_coin_in = 0
     total_coin_out = 0
     for i in range(test_spins):
-        result = spin(machine, 10, False, (4, 0, 4, 0, 4))
+        result = spin(machine, base_coin_in, False, (4, 0, 4, 0, 4))
+        total_coin_in += base_coin_in
+        total_coin_out += get_total_coin_out(result)
         print(make_spin_log(0, machine.reel_heights, i, result))
+
+    # summary
+    print('base bet : {}'.format(base_coin_in))
+    print('spins : {}'.format(test_spins))
+    print('total coin in : {}'.format(total_coin_in))
+    print('total coin out : {}'.format(total_coin_out))
+    print('rtp : {}'.format(total_coin_out / total_coin_in))

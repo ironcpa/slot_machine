@@ -490,6 +490,117 @@ class TestSlotMachine(TestCase):
         self.assertEqual(freespin_line_results[1].coin_out, 80)
         self.assertEqual(freespin_line_results[2].coin_out, 30)
 
+    def test_freespin_retrigger2(self):
+        machine = SlotMachine((3, 3, 3),
+                              (Symbol('W', True),
+                               Symbol('A', False),
+                               Symbol('B', False),
+                               Symbol('C', False),
+                               Symbol('S', False)),  # scatter
+                              (Paytable('W', 3, 200),
+                               Paytable('A', 3, 200),
+                               Paytable('A', 2, 100),
+                               Paytable('B', 3, 80),
+                               Paytable('C', 3, 30)),
+                              (ScatterPaytable('S', 3, 'freespin', 3),),
+                              ((0, 0, 0), (1, 1, 1), (2, 2, 2)),
+                              (('S', 'B', 'C', 'A'),
+                               ('S', 'A', 'C', 'B'),
+                               ('S', 'B', 'A', 'C')),
+                              (('S', 'A', 'B', 'C'),
+                               ('S', 'A', 'B', 'C'),
+                               ('S', 'A', 'B', 'C'),))
+
+        test_stops = [(0, 0, 0),
+                      (0, 0, 0),
+                      (1, 1, 1),
+                      (1, 1, 1),
+                      (1, 1, 1),
+                      (1, 1, 1),
+                      (1, 1, 1),
+                      (1, 1, 1)]
+        """
+        test scinario ====================================
+        N0(Sx3) ->
+                  F0(Sx3)                     -> F1 -> F2
+                         -> F00 -> F01 -> F02
+        ==================================================
+        """
+        # N0
+        result = sm.spin(machine, 1, False, test_stops)
+        self.assertEqual(result.stop_pos, (0, 0, 0))
+        self.assertEqual(result.symbols,
+                         ('S', 'B', 'C', 'S', 'A', 'C', 'S', 'B', 'A'))
+
+        scatter_result = result.scatter_results[0]
+        self.assertEqual(len(scatter_result.child_results), 3)
+
+        # F0
+        freespin_result = scatter_result.child_results[0]
+        self.assertEqual(freespin_result.stop_pos, (0, 0, 0))
+        self.assertEqual(freespin_result.symbols,
+                         ('S', 'A', 'B', 'S', 'A', 'B', 'S', 'A', 'B'))
+        freespin_line_results = freespin_result.line_results
+        self.assertEqual(len(freespin_line_results), 2)
+        self.assertEqual(freespin_line_results[0].coin_out, 200)
+        self.assertEqual(freespin_line_results[1].coin_out, 80)
+
+        inner_scatter_result = freespin_result.scatter_results[0]
+        self.assertEqual(len(inner_scatter_result.child_results), 3)
+
+        # F00
+        freespin_result = inner_scatter_result.child_results[0]
+        self.assertEqual(freespin_result.stop_pos, (1, 1, 1))
+        self.assertEqual(freespin_result.symbols,
+                         ('A', 'B', 'C', 'A', 'B', 'C', 'A', 'B', 'C'))
+        freespin_line_results = freespin_result.line_results
+        self.assertEqual(len(freespin_line_results), 3)
+        self.assertEqual(freespin_line_results[0].coin_out, 200)
+        self.assertEqual(freespin_line_results[1].coin_out, 80)
+        self.assertEqual(freespin_line_results[2].coin_out, 30)
+
+        # F01
+        freespin_result = inner_scatter_result.child_results[1]
+        self.assertEqual(freespin_result.stop_pos, (1, 1, 1))
+        self.assertEqual(freespin_result.symbols,
+                         ('A', 'B', 'C', 'A', 'B', 'C', 'A', 'B', 'C'))
+        freespin_line_results = freespin_result.line_results
+        self.assertEqual(len(freespin_line_results), 3)
+        self.assertEqual(freespin_line_results[0].coin_out, 200)
+        self.assertEqual(freespin_line_results[1].coin_out, 80)
+        self.assertEqual(freespin_line_results[2].coin_out, 30)
+
+        # F02
+        freespin_result = inner_scatter_result.child_results[2]
+        self.assertEqual(freespin_result.stop_pos, (1, 1, 1))
+        self.assertEqual(freespin_result.symbols,
+                         ('A', 'B', 'C', 'A', 'B', 'C', 'A', 'B', 'C'))
+        freespin_line_results = freespin_result.line_results
+        self.assertEqual(len(freespin_line_results), 3)
+        self.assertEqual(freespin_line_results[0].coin_out, 200)
+        self.assertEqual(freespin_line_results[1].coin_out, 80)
+        self.assertEqual(freespin_line_results[2].coin_out, 30)
+
+        # F1
+        freespin_result = scatter_result.child_results[1]
+        self.assertEqual(freespin_result.symbols,
+                         ('A', 'B', 'C', 'A', 'B', 'C', 'A', 'B', 'C'))
+        freespin_line_results = freespin_result.line_results
+        self.assertEqual(len(freespin_line_results), 3)
+        self.assertEqual(freespin_line_results[0].coin_out, 200)
+        self.assertEqual(freespin_line_results[1].coin_out, 80)
+        self.assertEqual(freespin_line_results[2].coin_out, 30)
+
+        # F2
+        freespin_result = scatter_result.child_results[2]
+        self.assertEqual(freespin_result.symbols,
+                         ('A', 'B', 'C', 'A', 'B', 'C', 'A', 'B', 'C'))
+        freespin_line_results = freespin_result.line_results
+        self.assertEqual(len(freespin_line_results), 3)
+        self.assertEqual(freespin_line_results[0].coin_out, 200)
+        self.assertEqual(freespin_line_results[1].coin_out, 80)
+        self.assertEqual(freespin_line_results[2].coin_out, 30)
+
 
 """
 todo: collect n log summary data
