@@ -1,13 +1,13 @@
 from collections import namedtuple
 from slot_machine import spin, create_sample_machine, make_spin_log
-import slot_ui
+import local_window
 
 
 Summary = namedtuple('Summary', 'spins wins coin_in coin_out')
 
 
 def simulate_slot(machine, count, stop_plan=None):
-    coin_in = 1
+    coin_in = 1 * len(machine.paylines)
 
     results = []
     for n in range(count):
@@ -74,4 +74,4 @@ if __name__ == '__main__':
     summary = make_summary(results)
     print(make_summary_print_format(summary))
 
-    slot_ui.show_spin_results_window(machine, results)
+    local_window.show_spin_results_window(machine, results)

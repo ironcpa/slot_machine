@@ -1,3 +1,53 @@
+from collections import namedtuple
+
+
+# Symbol = namedtuple('Symbol', 'code is_wild')
+Paytable = namedtuple('Paytable', 'symbol count payout')
+ScatterPaytable = namedtuple('ScatterPaytable', 'symbol count type reward')
+
+Symbol = namedtuple('Symbol', 'id code desc type')
+BetRange = namedtuple('BetRange', 'line_bet total_bet unlock_level')
+ReelSymbol = namedtuple('ReelSymbol', 'symbol weight')
+
+
+class Payline:
+    def __init__(self, id, r0=None, r1=None, r2=None, r3=None, r4=None):
+        self.id = id
+        self.r0 = r0
+        self.r1 = r1
+        self.r2 = r2
+        self.r3 = r3
+        self.r4 = r4
+        self.rows = (r0, r1, r2, r3, r4)
+
+    def __len__(self):
+        return len(self.rows)
+
+    def __iter__(self):
+        return (e for e in self.rows)
+
+
+class ReelData:
+    def __init__(self, name):
+        self.name = name
+        self._reels = []
+
+    def add_symbol(self, reel, symbol, weight):
+        if len(self._reels) < reel+1:
+            self._reels.append([])
+
+        self._reels[reel].append(ReelSymbol(symbol, weight))
+
+    def reel(self, index):
+        return self._reels[index]
+
+    def reel_len(self, index):
+        return len(self._reels[index])
+
+    def __iter__(self):
+        return (e for e in self._reels)
+
+
 class PaylineResult:
     def __init__(self, line_id, coin_out):
         self.line_id = line_id
@@ -24,12 +74,14 @@ class ScatterResult:
 class Result:
     def __init__(self,
                  spin_type,
+                 line_bet,
                  coin_in,
                  stop_pos,
                  symbols,
                  line_results,
                  scatter_results=[]):
         self.spin_type = spin_type
+        self.line_bet = line_bet
         self.coin_in = coin_in
         self.stop_pos = stop_pos
         self.symbols = symbols      # symbol sequence by rows by top to bottom
@@ -74,6 +126,7 @@ def to_spin_result(dict_result):
         scatter_results.append(scatter_result)
 
     spin_result = Result(dict_result['spin_type'],
+                         dict_result['line_bet'],
                          dict_result['coin_in'],
                          dict_result['stop_pos'],
                          dict_result['symbols'],

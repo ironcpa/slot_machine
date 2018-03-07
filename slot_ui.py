@@ -26,20 +26,6 @@ class SlotMachineWidget(QGraphicsView):
 
         self.setScene(QGraphicsScene())
 
-    '''
-    def __init__(self, machine):
-        super(SlotMachineWidget, self).__init__()
-
-        self.payline_off = 25
-
-        self.pay_h = 20
-        self.scatter_h = 20
-
-        self.machine = machine
-
-        self.setScene(QGraphicsScene())
-    '''
-
     def show_result(self, spin_no, total_spins, spin_result):
         self.clear_all()
 

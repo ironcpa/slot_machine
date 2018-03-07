@@ -1,14 +1,9 @@
 import random
-from collections import namedtuple
-from slot_data import Result
-from slot_data import PaylineResult
-from slot_data import ScatterResult
+from slot_data import ReelData, Result, PaylineResult, ScatterResult
+import machine_parser
+
 
 INDENT = ' ' * 4
-
-Symbol = namedtuple('Symbol', 'code is_wild')
-Paytable = namedtuple('Paytable', 'symbol count payout')
-ScatterPaytable = namedtuple('ScatterPaytable', 'symbol count type reward')
 
 
 class SlotMachine:
@@ -29,10 +24,59 @@ class SlotMachine:
         self.free_reels = free_reels
 
 
+class SlotMachine2:
+    def __init__(self,
+                 reel_heights=(),
+                 symboldefs=(),
+                 paylines=(),
+                 paytables=(),
+                 scatter_paytables=(),
+                 reels=()):
+        self.reel_heights = reel_heights
+        self.symboldefs = symboldefs
+        self.paytables = paytables
+        self.scatter_paytables = scatter_paytables
+        self.paylines = paylines
+        self.reels = reels
+
+    def normal_reel(self):
+        return self.reels['normal']
+
+    def free_reel(self):
+        if 'freespin' in self.reels.keys():
+            return self.reels['freespin']
+        else:
+            return None
+
+
+def make_reel(name,
+              reel0=None, reel1=None, reel2=None, reel3=None, reel4=None):
+    reeldata = ReelData(name)
+    if reel0:
+        for e in reel0:
+            reeldata.add_symbol(0, e, 1)
+    if reel1:
+        for e in reel1:
+            reeldata.add_symbol(1, e, 1)
+    if reel2:
+        for e in reel2:
+            reeldata.add_symbol(2, e, 1)
+    if reel3:
+        for e in reel3:
+            reeldata.add_symbol(3, e, 1)
+    if reel4:
+        for e in reel4:
+            reeldata.add_symbol(4, e, 1)
+    return reeldata
+
+
 def get_line_symbols(reel_lens, symbols, payline):
     line_symbols = []
     reel_start = 0
-    for reel, row in enumerate(payline):
+    # for reel, row in enumerate(payline[1:]):
+    for reel, row in enumerate(payline.rows):
+        if row is None:
+            continue
         reel_start += reel_lens[reel-1] if reel != 0 else 0
         reel_end = reel_start + reel_lens[reel]
         line_symbols.append(symbols[reel_start:reel_end][row])
@@ -45,9 +89,9 @@ def spin(machine, coin_in, is_free=False, reserved_reelstops=None):
 
     target_reel = None
     if is_free:
-        target_reel = machine.free_reels
+        target_reel = machine.free_reel()
     else:
-        target_reel = machine.reels
+        target_reel = machine.normal_reel()
 
     if reserved_reelstops and len(reserved_reelstops) > 0:
         reelstop = reserved_reelstops.pop(0)
@@ -57,11 +101,11 @@ def spin(machine, coin_in, is_free=False, reserved_reelstops=None):
     symbol_list = []
     for reel_no, reel_height in enumerate(machine.reel_heights):
         stop = reelstop[reel_no]
-        reel = target_reel[reel_no]
+        reel = target_reel.reel(reel_no)
         reel_len = len(reel)
         for row in range(reel_height):
             i = (stop + row) % reel_len
-            symbol_list.append(reel[i])
+            symbol_list.append(reel[i].symbol)
     symbols = tuple(symbol_list)
 
     line_bet = coin_in / len(machine.paylines)
@@ -89,6 +133,7 @@ def spin(machine, coin_in, is_free=False, reserved_reelstops=None):
     spin_type = 'free' if is_free else 'normal'
 
     return Result(spin_type,
+                  line_bet,
                   coin_in,
                   reelstop,
                   symbols,
@@ -126,7 +171,7 @@ def fst(iterable):
 
 def is_wild(symboldefs, symbol):
     for s in symboldefs:
-        if s.code == symbol and s.is_wild:
+        if s.code == symbol and s.type == 'wild':
             return True
     return False
 
@@ -269,7 +314,7 @@ def make_payline_log(tabs, reel_heights, result):
     log = ''
     for r in line_results:
         log += indents + 'line{:02d}, {}, {}\n'.format(r.line_id,
-                                                       result.coin_in,
+                                                       result.line_bet,
                                                        r.coin_out)
 
     return log
@@ -293,6 +338,14 @@ def make_scatter_log(tabs, reel_heights, result):
 
 
 def create_sample_machine():
+    md = machine_parser.get_machine('machines/diamond_rush.opt')
+    machine = SlotMachine2(reel_heights=md['[layout]'][0],
+                           symboldefs=md['[symbols]'],
+                           paylines=md['[paylines]'],
+                           paytables=md['[paytables]'],
+                           scatter_paytables=md['[scatter paytables]'],
+                           reels=md['[reels]'])
+    '''
     machine = SlotMachine(reel_heights=(3, 3, 3, 3, 3),
                           symboldefs=(Symbol('W', True),
                                       Symbol('A', False),
@@ -338,6 +391,7 @@ def create_sample_machine():
                                       ('S', 'W', 'A', 'B', 'C', 'D', 'E'),
                                       ('S', 'W', 'A', 'B', 'C', 'D', 'E'),
                                       ('S', 'W', 'A', 'B', 'C', 'D', 'E')))
+                                    '''
 
     return machine
 
@@ -345,13 +399,16 @@ def create_sample_machine():
 if __name__ == '__main__':
     machine = create_sample_machine()
 
-    test_spins = 10
+    test_spins = 1
+
     total_spins = 0
-    base_coin_in = 1
+    line_bet = 1
+    base_coin_in = line_bet * len(machine.paylines)
     total_coin_in = 0
     total_coin_out = 0
     for i in range(test_spins):
-        result = spin(machine, base_coin_in, False, (4, 0, 4, 0, 4))
+        # result = spin(machine, base_coin_in, False, (3, 3, 3, 3, 3))
+        result = spin(machine, base_coin_in, False)
         total_coin_in += base_coin_in
         total_coin_out += get_total_coin_out(result)
         print(make_spin_log(0, machine.reel_heights, i, result))
