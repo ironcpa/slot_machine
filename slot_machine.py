@@ -153,9 +153,9 @@ def get_scatter_results(machine, coin_in, symbol_list):
             if s == scatter:
                 match += 1
         if table.symbol == scatter and table.count == match:
-            if table.type is 'payout':
+            if table.type == 'payout':
                 payout = coin_in * table.reward
-            elif table.type is 'freespin':
+            elif table.type == 'freespin':
                 freespins = table.reward
             scatter_results.append(ScatterResult(scatter,
                                                  match,
@@ -399,7 +399,7 @@ def create_sample_machine():
 if __name__ == '__main__':
     machine = create_sample_machine()
 
-    test_spins = 1
+    test_spins = 1000
 
     total_spins = 0
     line_bet = 1

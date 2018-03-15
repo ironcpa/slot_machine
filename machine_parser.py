@@ -135,7 +135,8 @@ def parse_reeldata(reel_data):
             for reel, d in enumerate(symbol_pairs):
                 symbol = d[0]
                 weight = int(d[1])
-                reeldatas[cur_reel_name].add_symbol(reel, symbol, weight)
+                if symbol != '-':
+                    reeldatas[cur_reel_name].add_symbol(reel, symbol, weight)
 
             row_checker += 1
 
